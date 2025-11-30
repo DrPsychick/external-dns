@@ -89,7 +89,7 @@ func NewLabelsFromStringPlain(labelText string) (Labels, error) {
 
 func NewLabelsFromString(labelText string, aesKey []byte) (Labels, error) {
 	if len(aesKey) != 0 {
-		decryptedText, encryptionNonce, err := DecryptText(strings.Trim(labelText, "\""), aesKey)
+		decryptedText, encryptionNonce, err := DecryptText(strings.Trim(strings.TrimPrefix(labelText, "heritage="), "\""), aesKey)
 		// in case if we have a decryption error, try process original text
 		// decryption errors should be ignored here, because we can already have plain-text labels in the registry
 		if err == nil {
@@ -155,7 +155,9 @@ func (l Labels) Serialize(withQuotes bool, txtEncryptEnabled bool, aesKey []byte
 	}
 
 	if withQuotes {
-		text = fmt.Sprintf("\"%s\"", text)
+		text = fmt.Sprintf("heritage=\"%s\"", text)
+	} else {
+		text = fmt.Sprintf("heritage=%s", text)
 	}
 	log.Debugf("Serialized text after encryption is %#v.", text)
 	return text

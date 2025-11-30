@@ -158,7 +158,7 @@ func NewTXTRegistry(provider provider.Provider, txtPrefix, txtSuffix, ownerID st
 }
 
 func getSupportedTypes() []string {
-	return []string{endpoint.RecordTypeA, endpoint.RecordTypeAAAA, endpoint.RecordTypeCNAME, endpoint.RecordTypeNS, endpoint.RecordTypeMX}
+	return []string{endpoint.RecordTypeA, endpoint.RecordTypeAAAA, endpoint.RecordTypeCNAME, endpoint.RecordTypeNS, endpoint.RecordTypeMX, endpoint.RecordTypeTXT, endpoint.RecordTypeSRV}
 }
 
 func (im *TXTRegistry) GetDomainFilter() endpoint.DomainFilterInterface {
@@ -197,7 +197,12 @@ func (im *TXTRegistry) Records(ctx context.Context) ([]*endpoint.Endpoint, error
 	txtRecordsMap := map[string]struct{}{}
 
 	for _, record := range records {
+		// collect non-TXT records and TXT records that are not from the txt registry
 		if record.RecordType != endpoint.RecordTypeTXT {
+			endpoints = append(endpoints, record)
+			continue
+		}
+		if len(record.Targets) > 0 && !strings.HasPrefix(record.Targets[0], "heritage=") && !strings.HasPrefix(record.Targets[0], "\"heritage=") {
 			endpoints = append(endpoints, record)
 			continue
 		}
@@ -225,10 +230,14 @@ func (im *TXTRegistry) Records(ctx context.Context) ([]*endpoint.Endpoint, error
 			RecordType:    recordType,
 			SetIdentifier: record.SetIdentifier,
 		}
+		//log.Debugf("collect labels %s -> %s: %v", record.DNSName, endpointName, labels)
 		labelMap[key] = labels
 		txtRecordsMap[record.DNSName] = struct{}{}
 		im.existingTXTs.add(record)
 	}
+	//log.Debugf("Registry labelMap %v", labelMap)
+	//log.Debugf("Registry txtRecordsMap %v", txtRecordsMap)
+	//log.Debugf("Endpoints %v", endpoints)
 
 	for _, ep := range endpoints {
 		if ep.Labels == nil {
@@ -258,6 +267,7 @@ func (im *TXTRegistry) Records(ctx context.Context) ([]*endpoint.Endpoint, error
 			labels, labelsExist = labelMap[key]
 		}
 		if labelsExist {
+			//log.Debugf("Found labels %s: %v", dnsName, labels)
 			for k, v := range labels {
 				ep.Labels[k] = v
 			}

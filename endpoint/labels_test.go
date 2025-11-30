@@ -79,7 +79,7 @@ func (suite *LabelsSuite) TestEncryptionNonceReUsage() {
 	foo, err := NewLabelsFromString(suite.fooAsTextEncrypted, suite.aesKey)
 	suite.NoError(err, "should succeed for valid label text")
 	serialized := foo.Serialize(false, true, suite.aesKey)
-	suite.Equal(serialized, suite.fooAsTextEncrypted, "serialized result should be equal")
+	suite.Equal(serialized, "heritage="+suite.fooAsTextEncrypted, "serialized result should be equal")
 }
 
 func (suite *LabelsSuite) TestEncryptionKeyChanged() {

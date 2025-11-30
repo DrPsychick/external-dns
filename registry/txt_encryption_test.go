@@ -121,7 +121,7 @@ func TestGenerateTXTGenerateTextRecordEncryptionWihDecryption(t *testing.T) {
 
 					// decrypt targets
 					for _, target := range txtRecords[0].Targets {
-						encryptedText, errUnquote := strconv.Unquote(target)
+						encryptedText, errUnquote := strconv.Unquote(strings.TrimPrefix(target, "heritage="))
 						assert.NoError(t, errUnquote, "Error unquoting the encrypted text")
 
 						actual, nonce, errDecrypt := endpoint.DecryptText(encryptedText, r.txtEncryptAESKey)
